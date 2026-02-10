@@ -1,10 +1,12 @@
 version: "3.8"
 
 services:
+  # Mandatory services
   mariadb:
     build:
       context: ./requirements/mariadb
       dockerfile: Dockerfile
+    container_name: mariadb
     restart: unless-stopped
     env_file:
       - .env
@@ -15,15 +17,28 @@ services:
     expose:
       - "3306"
 
+  redis:
+    build:
+      context: ./requirements/redis
+      dockerfile: Dockerfile
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - inception
+    expose:
+      - "6379"
+
   wordpress:
     build:
       context: ./requirements/wordpress
       dockerfile: Dockerfile
+    container_name: wordpress
     restart: unless-stopped
     env_file:
       - .env
     depends_on:
       - mariadb
+      - redis
     volumes:
       - wordpress_data:/var/www/html
     networks:
@@ -35,6 +50,7 @@ services:
     build:
       context: ./requirements/nginx
       dockerfile: Dockerfile
+    container_name: nginx
     restart: unless-stopped
     depends_on:
       - wordpress
@@ -42,6 +58,75 @@ services:
       - "443:443"
     volumes:
       - wordpress_data:/var/www/html:ro
+    networks:
+      - inception
+
+  # Bonus services
+  ftp:
+    build:
+      context: ./requirements/ftp
+      dockerfile: Dockerfile
+    container_name: ftp
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - wordpress
+    ports:
+      - "21:21"
+      - "21100-21110:21100-21110"
+    volumes:
+      - wordpress_data:/var/www/html
+    networks:
+      - inception
+
+  adminer:
+    build:
+      context: ./requirements/adminer
+      dockerfile: Dockerfile
+    container_name: adminer
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    networks:
+      - inception
+    expose:
+      - "9000"
+
+  adminer-nginx:
+    build:
+      context: ./requirements/adminer-nginx
+      dockerfile: Dockerfile
+    container_name: adminer-nginx
+    restart: unless-stopped
+    depends_on:
+      - adminer
+    ports:
+      - "8080:80"
+    networks:
+      - inception
+
+  static-website:
+    build:
+      context: ./requirements/static-website
+      dockerfile: Dockerfile
+    container_name: static-website
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    networks:
+      - inception
+
+  portainer:
+    image: portainer/portainer-ce:alpine
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9443:9443"
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
     networks:
       - inception
 
@@ -60,7 +145,9 @@ volumes:
       o: bind
       device: /home/aayache/data/wordpress
 
+  portainer_data:
+    driver: local
+
 networks:
   inception:
     driver: bridge
-
