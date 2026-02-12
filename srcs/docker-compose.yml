@@ -1,7 +1,10 @@
 version: "3.8"
 
 services:
+  # =========================
   # Mandatory services
+  # =========================
+
   mariadb:
     build:
       context: ./requirements/mariadb
@@ -17,17 +20,6 @@ services:
     expose:
       - "3306"
 
-  redis:
-    build:
-      context: ./requirements/redis
-      dockerfile: Dockerfile
-    container_name: redis
-    restart: unless-stopped
-    networks:
-      - inception
-    expose:
-      - "6379"
-
   wordpress:
     build:
       context: ./requirements/wordpress
@@ -38,7 +30,7 @@ services:
       - .env
     depends_on:
       - mariadb
-      - redis
+      - redis   # still depends on it if you're using Redis cache
     volumes:
       - wordpress_data:/var/www/html
     networks:
@@ -61,10 +53,24 @@ services:
     networks:
       - inception
 
+  # =========================
   # Bonus services
+  # =========================
+
+  redis:
+    build:
+      context: ./requirements/bonus/redis
+      dockerfile: Dockerfile
+    container_name: redis
+    restart: unless-stopped
+    networks:
+      - inception
+    expose:
+      - "6379"
+
   ftp:
     build:
-      context: ./requirements/ftp
+      context: ./requirements/bonus/ftp
       dockerfile: Dockerfile
     container_name: ftp
     restart: unless-stopped
@@ -82,7 +88,7 @@ services:
 
   adminer:
     build:
-      context: ./requirements/adminer
+      context: ./requirements/bonus/adminer
       dockerfile: Dockerfile
     container_name: adminer
     restart: unless-stopped
@@ -95,7 +101,7 @@ services:
 
   adminer-nginx:
     build:
-      context: ./requirements/adminer-nginx
+      context: ./requirements/bonus/adminer-nginx
       dockerfile: Dockerfile
     container_name: adminer-nginx
     restart: unless-stopped
@@ -108,7 +114,7 @@ services:
 
   static-website:
     build:
-      context: ./requirements/static-website
+      context: ./requirements/bonus/static-website
       dockerfile: Dockerfile
     container_name: static-website
     restart: unless-stopped
@@ -118,7 +124,9 @@ services:
       - inception
 
   portainer:
-    image: portainer/portainer-ce:alpine
+    build:
+      context: ./requirements/bonus/portainer
+      dockerfile: Dockerfile
     container_name: portainer
     restart: unless-stopped
     ports:

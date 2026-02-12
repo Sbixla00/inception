@@ -1,5 +1,8 @@
 FROM alpine:3.22
 
+
+RUN mkdir -p /var/www/html
+
 # 1) Install php-fpm + needed PHP extensions + Redis extension + tools
 RUN apk add --no-cache \
     php83 php83-fpm \
