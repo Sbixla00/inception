@@ -64,8 +64,10 @@ if ! wp core is-installed --path="${WP_PATH}" --allow-root; then
     --admin_email="${WP_ADMIN_EMAIL}" \
     --skip-email \
     --allow-root
+fi
 
   # Second user (non-admin)
+if ! wp user get "${WP_USER}" --path="${WP_PATH}" --allow-root >/dev/null 2>&1; then
   wp user create \
     "${WP_USER}" "${WP_USER_EMAIL}" \
     --user_pass="${WP_USER_PASSWORD}" \

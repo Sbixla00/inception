@@ -1,6 +1,6 @@
 FROM alpine:3.22
 
-RUN apk add --no-cache mariadb mariadb-client tini
+RUN apk add --no-cache mariadb mariadb-client
 
 # Optional: ensure runtime dirs exist
 RUN mkdir -p /run/mysqld /var/lib/mysql \
@@ -12,4 +12,4 @@ RUN chmod +x /entrypoint.sh
 
 EXPOSE 3306
 
-ENTRYPOINT ["/sbin/tini","--","/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

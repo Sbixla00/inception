@@ -1,6 +1,6 @@
 FROM alpine:3.22
 
-RUN apk add --no-cache nginx openssl tini
+RUN apk add --no-cache nginx openssl
 
 # SSL folder + nginx runtime folder
 RUN mkdir -p /etc/nginx/ssl /run/nginx
@@ -11,4 +11,4 @@ RUN chmod +x /entrypoint.sh
 
 EXPOSE 443
 
-ENTRYPOINT ["/sbin/tini","--","/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

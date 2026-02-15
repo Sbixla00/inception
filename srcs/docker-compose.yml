@@ -85,7 +85,7 @@ services:
       - wordpress_data:/var/www/html
     networks:
       - inception
-
+      
   adminer:
     build:
       context: ./requirements/bonus/adminer
@@ -98,6 +98,8 @@ services:
       - inception
     expose:
       - "9000"
+    volumes:
+      - adminer_data:/var/www/html
 
   adminer-nginx:
     build:
@@ -111,7 +113,9 @@ services:
       - "8080:80"
     networks:
       - inception
-
+    volumes:
+      - adminer_data:/var/www/html:ro
+  
   static-website:
     build:
       context: ./requirements/bonus/static-website
@@ -138,6 +142,23 @@ services:
     networks:
       - inception
 
+  filebrowser:
+    build:
+      context: ./requirements/bonus/filebrowser
+      dockerfile: Dockerfile
+    container_name: filebrowser
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8082:8080"
+    volumes:
+      - filebrowser_data:/data
+      - wordpress_data:/srv
+    networks:
+      - inception
+
+
 volumes:
   mariadb_data:
     driver: local
@@ -146,6 +167,9 @@ volumes:
       o: bind
       device: /home/aayache/data/mariadb
 
+  filebrowser_data:
+    driver: local
+  
   wordpress_data:
     driver: local
     driver_opts:
@@ -155,6 +179,15 @@ volumes:
 
   portainer_data:
     driver: local
+ 
+  adminer_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/aayache/data/adminer
+
+
 
 networks:
   inception:

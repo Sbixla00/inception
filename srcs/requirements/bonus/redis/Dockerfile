@@ -1,6 +1,6 @@
 FROM alpine:3.22
 
-RUN apk add --no-cache redis tini
+RUN apk add --no-cache redis
 
 # Create redis user and directory
 RUN mkdir -p /var/lib/redis /var/log/redis \
@@ -12,4 +12,4 @@ RUN chmod +x /entrypoint.sh
 
 EXPOSE 6379
 
-ENTRYPOINT ["/sbin/tini","--","/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -6,6 +6,7 @@ RUN mkdir -p /run/nginx /var/www/html
 
 COPY conf/adminer.conf /etc/nginx/http.d/default.conf
 
+
 EXPOSE 80
 
 ENTRYPOINT ["/sbin/tini","--","/usr/sbin/nginx","-g","daemon off;"]

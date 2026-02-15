@@ -10,7 +10,7 @@ RUN apk add --no-cache \
     php83-phar php83-iconv php83-mbstring php83-json \
     php83-curl php83-openssl \
     php83-redis \
-    curl tar mariadb-client tini
+    curl tar mariadb-client
 
 # 2) Configure php-fpm to listen on the network (nginx is in another container)
 RUN sed -i 's|^listen = .*|listen = 0.0.0.0:9000|' /etc/php83/php-fpm.d/www.conf
@@ -27,4 +27,4 @@ RUN chmod +x /entrypoint.sh
 
 EXPOSE 9000
 
-ENTRYPOINT ["/sbin/tini","--","/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

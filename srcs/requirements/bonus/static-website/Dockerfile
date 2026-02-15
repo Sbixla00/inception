@@ -1,6 +1,6 @@
 FROM alpine:3.22
 
-RUN apk add --no-cache nginx tini
+RUN apk add --no-cache nginx
 
 # Create nginx user and directories
 RUN mkdir -p /var/www/static /run/nginx
@@ -11,4 +11,4 @@ COPY website/ /var/www/static/
 
 EXPOSE 80
 
-ENTRYPOINT ["/sbin/tini","--","/usr/sbin/nginx","-g","daemon off;"]
+ENTRYPOINT ["/usr/sbin/nginx","-g","daemon off;"]
