@@ -1,36 +1,26 @@
-echo "FTP Server starting..."
+#!/bin/sh
+set -eu
 
-# Create necessary directories
-mkdir -p /var/log/vsftpd /var/run/vsftpd /var/ftp
+: "${FTP_USER:?}"
+: "${FTP_PASS:?}"
 
-# Update FTP user password from environment if provided
-if [ -n "${FTP_USER:-}" ] && [ -n "${FTP_PASSWORD:-}" ]; then
-    echo "Setting up FTP user: ${FTP_USER}"
-    
-    # Create user if doesn't exist
-    if ! id "${FTP_USER}" >/dev/null 2>&1; then
-        adduser -D -h /var/ftp "${FTP_USER}"
-    fi
-    
-    # Set password
-    echo "${FTP_USER}:${FTP_PASSWORD}" | chpasswd
-    echo "Password updated for ${FTP_USER}"
+# Create user if not exists
+if ! id "$FTP_USER" >/dev/null 2>&1; then
+  adduser -D -h /var/www/html -s /sbin/nologin "$FTP_USER"
+  echo "$FTP_USER:$FTP_PASS" | chpasswd
 fi
 
-# Ensure ftpuser can access WordPress directory
-if [ -d /var/www/html ]; then
-    chown -R ftpuser:ftpuser /var/www/html 2>/dev/null || true
-fi
+# Ensure correct ownership so FTP can write
+chown -R "$FTP_USER":"$FTP_USER" /var/www/html || true
 
-# Find vsftpd binary
-VSFTPD=$(which vsftpd)
-if [ -z "$VSFTPD" ]; then
-    echo "ERROR: vsftpd not found!"
-    exit 1
-fi
+# Write pasv_address dynamically if provided
+# if [ -n "${FTP_PASV_ADDRESS:-}" ]; then
+#   # replace existing or append
+#   if grep -q '^pasv_address=' /etc/vsftpd/vsftpd.conf; then
+#     sed -i "s|^pasv_address=.*|pasv_address=${FTP_PASV_ADDRESS}|" /etc/vsftpd/vsftpd.conf
+#   else
+#     echo "pasv_address=${FTP_PASV_ADDRESS}" >> /etc/vsftpd/vsftpd.conf
+#   fi
+# fi
 
-echo "Found vsftpd at: $VSFTPD"
-echo "Starting vsftpd FTP server (plain FTP, no SSL)..."
-
-# Start vsftpd
-exec $VSFTPD /etc/vsftpd/vsftpd.conf
+exec /usr/sbin/vsftpd /etc/vsftpd/vsftpd.conf

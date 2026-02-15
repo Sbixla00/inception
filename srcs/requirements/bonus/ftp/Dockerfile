@@ -1,10 +1,10 @@
 FROM alpine:3.22
 
-RUN apk add --no-cache vsftpd tini
+RUN apk add --no-cache vsftpd
 
+COPY conf/vsftpd.conf /etc/vsftpd/vsftpd.conf
 COPY tools/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 21 21100-21110
-
-ENTRYPOINT ["/sbin/tini","--","/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
