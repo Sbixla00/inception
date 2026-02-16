@@ -80,7 +80,7 @@ services:
       - wordpress
     ports:
       - "21:21"
-      - "21100-21110:21100-21110"
+      - "21100:21100"
     volumes:
       - wordpress_data:/var/www/html
     networks:
@@ -96,26 +96,9 @@ services:
       - mariadb
     networks:
       - inception
-    expose:
-      - "9000"
-    volumes:
-      - adminer_data:/var/www/html
-
-  adminer-nginx:
-    build:
-      context: ./requirements/bonus/adminer-nginx
-      dockerfile: Dockerfile
-    container_name: adminer-nginx
-    restart: unless-stopped
-    depends_on:
-      - adminer
     ports:
-      - "8080:80"
-    networks:
-      - inception
-    volumes:
-      - adminer_data:/var/www/html:ro
-  
+      - "8083:8080"
+
   static-website:
     build:
       context: ./requirements/bonus/static-website
@@ -167,15 +150,6 @@ volumes:
   portainer_data:
     driver: local
  
-  adminer_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: /home/aayache/data/adminer
-
-
-
 networks:
   inception:
     driver: bridge

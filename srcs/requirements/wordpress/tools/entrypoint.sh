@@ -48,9 +48,9 @@ if [ ! -f "${WP_PATH}/wp-config.php" ]; then
     --allow-root
   
   # Add Redis configuration to wp-config.php
-  wp config set WP_REDIS_HOST "redis" --allow-root 
-  wp config set WP_REDIS_PORT "6379" --raw --allow-root 
-  wp config set WP_CACHE "true" --raw --allow-root 
+  wp config set WP_REDIS_HOST redis --allow-root --type=constant
+  wp config set WP_REDIS_PORT 6379 --raw --type=constant  --allow-root 
+  wp config set WP_CACHE "true" --raw --allow-root --type=constant
 fi
 
 # ---------- Install WordPress + create users (only once) ----------
@@ -76,15 +76,14 @@ if ! wp user get "${WP_USER}"  --allow-root >/dev/null 2>&1; then
     --allow-root
 fi
 
-# ---------- Install and activate Redis Object Cache plugin ----------
-if ! wp plugin is-installed redis-cache  --allow-root; then
-  wp plugin install redis-cache --activate  --allow-root
+if wp plugin is-installed redis-cache --allow-root; then
+  wp plugin activate redis-cache --allow-root || true
+else
+  wp plugin install redis-cache --activate --allow-root
 fi
 
-# Enable Redis cache if not already enabled
-if ! wp redis status  --allow-root 2>/dev/null | grep -q "Connected"; then
-  wp redis enable  --allow-root || true
+# only enable cache if redis responds
+if redis-cli -h redis -p 6379 ping 2>/dev/null | grep -q PONG; then
+  wp redis enable --allow-root || true
 fi
-
-# ---------- Start php-fpm in foreground ----------
 exec php-fpm83 -F

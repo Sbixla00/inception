@@ -15,6 +15,8 @@ RUN apk add --no-cache \
 # 2) Configure php-fpm to listen on the network (nginx is in another container)
 RUN sed -i 's|^listen = .*|listen = 0.0.0.0:9000|' /etc/php83/php-fpm.d/www.conf
 
+RUN printf "memory_limit=512M\n" > /etc/php83/conf.d/99-memory.ini
+
 # 3) Install WP-CLI (from official phar) into PATH
 RUN curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
  && chmod +x /usr/local/bin/wp
