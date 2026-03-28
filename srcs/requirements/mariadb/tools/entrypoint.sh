@@ -32,7 +32,7 @@ if [ ! -d /var/lib/mysql/mysql ]; then
 
   if ! mariadb-admin --socket=/run/mysqld/mysqld.sock ping --silent; then
     echo "MariaDB init failed"
-    kill "$pid" || true
+    kill "$pid"
     exit 1
   fi
 
@@ -49,7 +49,7 @@ SQL
   echo "Stopping temporary MariaDB..."
   mariadb-admin --socket=/run/mysqld/mysqld.sock \
     -uroot -p"${MYSQL_ROOT_PASSWORD}" shutdown
-  wait "$pid" || true
+  wait "$pid"
 fi
 
 echo "Starting MariaDB..."
