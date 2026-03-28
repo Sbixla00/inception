@@ -77,13 +77,13 @@ if ! wp user get "${WP_USER}"  --allow-root >/dev/null 2>&1; then
 fi
 
 if wp plugin is-installed redis-cache --allow-root; then
-  wp plugin activate redis-cache --allow-root || true
+  wp plugin activate redis-cache --allow-root
 else
   wp plugin install redis-cache --activate --allow-root
 fi
 
 # only enable cache if redis responds
 if redis-cli -h redis -p 6379 ping 2>/dev/null | grep -q PONG; then
-  wp redis enable --allow-root || true
+  wp redis enable --allow-root
 fi
 exec php-fpm83 -F
