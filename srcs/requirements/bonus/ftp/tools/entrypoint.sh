@@ -1,6 +1,13 @@
 #!/bin/sh
 set -eu
 
+
+set -a
+. /run/secrets/credentials
+. /run/secrets/db_password
+. /run/secrets/db_root_password
+set +a
+
 : "${FTP_USER:?}"
 : "${FTP_PASSWORD:?}"
 : "${PASV_ADDRESS:?FTP server requires PASV_ADDRESS to be set}"

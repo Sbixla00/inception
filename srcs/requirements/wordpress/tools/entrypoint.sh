@@ -1,6 +1,14 @@
 #!/bin/sh
 set -eu
 
+
+set -a
+. /run/secrets/credentials
+. /run/secrets/db_password
+. /run/secrets/db_root_password
+set +a
+
+
 # ---------- Required non-secret config ----------
 : "${DOMAIN_NAME:?}"
 : "${WP_TITLE:?}"

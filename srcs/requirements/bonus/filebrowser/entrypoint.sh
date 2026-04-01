@@ -1,6 +1,13 @@
 #!/bin/sh
 set -eu
 
+set -a
+. /run/secrets/credentials
+. /run/secrets/db_password
+. /run/secrets/db_root_password
+set +a
+
+
 # default fallback if not set
 USER="${FILEBROWSER_USER:-admin}"
 PASS="${FILEBROWSER_PASS:-admin}"

@@ -1,6 +1,13 @@
 #!/bin/sh
 set -eu
 
+
+set -a
+. /run/secrets/credentials
+. /run/secrets/db_password
+. /run/secrets/db_root_password
+set +a
+
 # Required environment variables
 : "${MYSQL_DATABASE:?}"
 : "${MYSQL_USER:?}"

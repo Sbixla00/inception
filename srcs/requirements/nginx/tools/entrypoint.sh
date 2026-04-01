@@ -1,6 +1,13 @@
 #!/bin/sh
 set -eu
 
+set -a
+. /run/secrets/credentials
+. /run/secrets/db_password
+. /run/secrets/db_root_password
+set +a
+
+
 DOMAIN="aayache.42.fr"
 CERT="/etc/nginx/ssl/nginx.crt"
 KEY="/etc/nginx/ssl/nginx.key"
