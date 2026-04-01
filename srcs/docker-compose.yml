@@ -108,13 +108,13 @@ services:
       - inception
 
 
-secrets:
-  db_password:
-    file: ../secrets/db_password.txt
-  db_root_password:
-    file: ../secrets/db_root_password.txt
-  credentials:
-    file: ../secrets/credentials.txt
+  secrets:
+    db_password:
+      file: ../secrets/db_password.txt
+    db_root_password:
+      file: ../secrets/db_root_password.txt
+    credentials:
+      file: ../secrets/credentials.txt
 
   filebrowser:
     build:
