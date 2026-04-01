@@ -14,6 +14,10 @@ services:
       - mariadb_data:/var/lib/mysql
     networks:
       - inception
+    secrets:
+      - credentials
+      - db_password
+      - db_root_password
     expose:
       - "3306"
 
@@ -32,6 +36,10 @@ services:
       - wordpress_data:/var/www/html
     networks:
       - inception
+    secrets:
+      - credentials
+      - db_password
+      - db_root_password
     expose:
       - "9000"
 
@@ -49,6 +57,10 @@ services:
       - wordpress_data:/var/www/html:ro
     networks:
       - inception
+    secrets:
+      - credentials
+      - db_password
+      - db_root_password
 
   # =========================
   # Bonus services
@@ -82,6 +94,10 @@ services:
       - wordpress_data:/var/www/html
     networks:
       - inception
+    secrets:
+      - credentials
+      - db_password
+      - db_root_password
       
   adminer:
     build:
@@ -93,6 +109,10 @@ services:
       - mariadb
     networks:
       - inception
+    secrets:
+      - credentials
+      - db_password
+      - db_root_password
     ports:
       - "8083:8080"
 
