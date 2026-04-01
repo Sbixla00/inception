@@ -127,15 +127,6 @@ services:
     networks:
       - inception
 
-
-  secrets:
-    db_password:
-      file: ../secrets/db_password.txt
-    db_root_password:
-      file: ../secrets/db_root_password.txt
-    credentials:
-      file: ../secrets/credentials.txt
-
   filebrowser:
     build:
       context: ./requirements/bonus/filebrowser
@@ -152,7 +143,14 @@ services:
     networks:
       - inception
 
-
+secrets:
+  db_password:
+    file: ../secrets/db_password.txt
+  db_root_password:
+    file: ../secrets/db_root_password.txt
+  credentials:
+    file: ../secrets/credentials.txt
+    
 volumes:
   mariadb_data:
     driver: local
