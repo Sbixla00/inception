@@ -47,33 +47,6 @@ Using a custom **bridge network** (`inception`) isolates all containers from the
   ```
   echo "127.0.0.1 aayache.42.fr" | sudo tee -a /etc/hosts
   ```
-
-### Build & Run
-
-```bash
-# Clone the repository
-git clone <repo-url> inception && cd inception
-
-# Start everything (builds images, creates dirs, launches containers)
-make
-
-# Tear down (containers only, data preserved)
-make down
-
-# Full reset (removes images, volumes, and data)
-make fclean && make
-```
-
-### Access Points
-
-| Service       | URL / Port                        |
-|---------------|-----------------------------------|
-| WordPress     | `https://aayache.42.fr`           |
-| Adminer       | `http://localhost:8083`           |
-| Static Site   | `http://localhost:8081`           |
-| FileBrowser   | `http://localhost:8082`           |
-| FTP           | `ftp://localhost:21`              |
-
 ---
 
 ## Resources
@@ -101,6 +74,5 @@ AI (Claude, Anthropic) was used during this project for the following tasks:
 - **Debugging entrypoint scripts**: helping diagnose shell script issues (`set -eu`, secret sourcing, wait loops).
 - **Docker Compose configuration**: reviewing service dependency ordering and volume definitions.
 - **WordPress + Redis integration**: identifying the correct WP-CLI commands to configure and enable the Redis object cache plugin.
-- **Documentation**: generating and structuring the README, USER_DOC, and DEV_DOC files based on the actual project source.
 
 AI was **not** used to write the core Dockerfiles, entrypoint logic, or NGINX/MariaDB configuration from scratch — these were written and iterated on manually.
