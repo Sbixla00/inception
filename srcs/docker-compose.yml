@@ -142,6 +142,10 @@ services:
       - wordpress_data:/srv
     networks:
       - inception
+        secrets:
+      - credentials
+      - db_password
+      - db_root_password
 
 secrets:
   db_password:
@@ -168,9 +172,6 @@ volumes:
       type: none
       o: bind
       device: /home/aayache/data/wordpress
-
-  portainer_data:
-    driver: local
  
 networks:
   inception:
