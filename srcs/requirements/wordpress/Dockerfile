@@ -12,14 +12,11 @@ RUN apk add --no-cache \
     php83-redis \
     php83-tokenizer \
     php83-ctype \
-    php83-dom \
-    php83-xml \
-    php83-simplexml \
-    php83-fileinfo \
-    php83-iconv \
-    php83-intl \
-    php83-zip \
-    php83-gd \
+    php83-dom \        # ← add
+    php83-xml \        # ← add
+    php83-simplexml \  # ← add
+    php83-xmlreader \  # ← add
+    php83-iconv \      # ← add
     curl tar mariadb-client
 
 # 2) Configure php-fpm to listen on the network (nginx is in another container)
