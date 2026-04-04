@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by [aayache].*
+*This project has been created as part of the 42 curriculum by aayache.*
 
 ---
 
@@ -6,34 +6,59 @@
 
 ## Description
 
-Inception is a system administration project from the 42 curriculum. The goal is to broaden knowledge of system administration by using **Docker** to virtualize a small but complete infrastructure composed of several services, each running in its own dedicated container.
+Inception is a system administration project from the 42 curriculum. The goal is to
+build a small but complete web infrastructure using Docker, where each service runs
+in its own dedicated container built from scratch on Alpine Linux 3.22.
 
-The stack is orchestrated via **Docker Compose** and includes:
+The infrastructure is orchestrated with Docker Compose and includes the following services:
 
-- **NGINX** — the sole entry point to the infrastructure, serving HTTPS (TLS 1.2/1.3 only) on port 443 and acting as a reverse proxy to WordPress via FastCGI.
-- **WordPress + PHP-FPM** — the CMS, configured with WP-CLI on startup. It connects to MariaDB for persistence and Redis for object caching.
-- **MariaDB** — the relational database backend for WordPress.
-- **Redis** — an in-memory object cache used by the WordPress Redis Cache plugin to speed up page loads.
-- **FTP Server (vsftpd)** — allows file management of the WordPress volume over FTP.
-- **Adminer** — a lightweight web-based database management UI.
-- **Static Website** — a minimal standalone HTML/CSS/JS website served by NGINX on port 8081.
-- **FileBrowser** — a web-based file manager exposing the WordPress volume on port 8082.
+- NGINX — the only entry point to the stack, serving HTTPS on port 443 (TLS 1.2/1.3),
+  acting as a reverse proxy to WordPress via FastCGI.
+- WordPress + PHP-FPM — the main CMS, set up automatically at first start via WP-CLI.
+- MariaDB — the relational database used by WordPress.
+- Redis — an in-memory object cache connected to WordPress via the Redis Cache plugin.
+- FTP (vsftpd) — allows FTP access to the WordPress files.
+- Adminer — a lightweight web interface for managing the database.
+- Static Website — a simple standalone HTML/CSS/JS page served by NGINX.
+- FileBrowser — a web-based file manager exposing the WordPress volume.
 
-All images are built from **Alpine Linux 3.22** — no pre-built application images (e.g. `wordpress:latest`) are used.
+### Use of Docker
 
-### Design Choices
+Docker is used to isolate each service into its own container with its own filesystem,
+process space, and network interface. All images are built from Alpine Linux 3.22 using
+custom Dockerfiles — no pre-built application images (e.g. wordpress:latest) are used.
+Docker Compose handles the wiring: networking, volumes, secrets, dependencies, and restart
+policies are all declared in srcs/docker-compose.yml.
 
-#### Virtual Machines vs Docker
-Virtual Machines (VMs) emulate an entire hardware stack and run a full OS per instance, making them heavyweight and slow to start. Docker containers share the host kernel and isolate only the process and filesystem layer, making them significantly lighter, faster to spin up, and easier to reproduce. For a multi-service web stack like Inception, Docker is the natural fit.
+### Main Design Choices
 
-#### Secrets vs Environment Variables
-Plain environment variables are visible to any process in the container and can leak through `docker inspect` or logs. Docker **secrets** are mounted as read-only files under `/run/secrets/` and are only available to the containers explicitly granted access. Sensitive values (database passwords, admin credentials) are stored in `secrets/` files and sourced inside entrypoints — never hard-coded in images or Compose environment blocks.
+**Virtual Machines vs Docker**
+A VM emulates a full hardware stack and runs a complete operating system per instance,
+making it resource-heavy and slow to start. Docker containers share the host kernel and
+isolate only the process and filesystem layer. For a reproducible multi-service web stack
+like this one, containers are significantly lighter and faster to spin up.
 
-#### Docker Network vs Host Network
-Using a custom **bridge network** (`inception`) isolates all containers from the host network and from each other unless explicitly connected. Only the services that need external access (NGINX on 443, FTP on 21/21100, Adminer, static site, FileBrowser) publish ports to the host. `host` network mode removes this isolation and is avoided here for security and portability.
+**Secrets vs Environment Variables**
+Plain environment variables are exposed to any process running in the container and
+can be read via `docker inspect`. Docker secrets are mounted as read-only files under
+`/run/secrets/` inside the container and are only accessible to services that explicitly
+declare them. All sensitive values in this project (passwords, credentials) are managed
+through Docker secrets, never hard-coded in images or Compose env blocks.
 
-#### Docker Volumes vs Bind Mounts
-**Bind mounts** map a specific host path into the container — useful when the host directory must survive container rebuilds and be directly accessible on the filesystem (e.g., `/home/aayache/data/wordpress`). **Named volumes** are managed entirely by Docker and are more portable. This project uses bind-mount-backed named volumes for `mariadb_data` and `wordpress_data` (so data persists at a predictable host path) and a pure named volume for `filebrowser_data`.
+**Docker Network vs Host Network**
+Using a custom bridge network (named `inception`) isolates all containers from the host
+network and from each other by default. Containers can only communicate if they are on
+the same network, and only explicitly published ports are reachable from outside.
+Host network mode removes all this isolation and is avoided here for both security and
+portability reasons.
+
+**Docker Volumes vs Bind Mounts**
+A bind mount maps a specific directory on the host into the container — data is stored
+at a known host path and survives container rebuilds. A named volume is managed entirely
+by Docker and is more portable but less predictable in location.
+This project uses bind-mount-backed named volumes for wordpress_data and mariadb_data
+(data is stored at /home/aayache/data/ on the host) and a pure named volume for
+filebrowser_data.
 
 ---
 
@@ -41,66 +66,67 @@ Using a custom **bridge network** (`inception`) isolates all containers from the
 
 ### Prerequisites
 
-- Docker Engine ≥ 24 and Docker Compose V2
-- A Linux host (tested on Debian/Ubuntu inside a VM)
-- The domain `aayache.42.fr` must resolve to `127.0.0.1` on the host:
-  ```
-  echo "127.0.0.1 aayache.42.fr" | sudo tee -a /etc/hosts
-  ```
+- Docker Engine >= 24 and Docker Compose V2 installed on a Linux host.
+- The project domain must resolve locally. Add this line to /etc/hosts:
 
-### Build & Run
+      127.0.0.1 aayache.42.fr
 
-```bash
-# Clone the repository
-git clone <repo-url> inception && cd inception
+- Fill in the secrets files before the first run (see DEV_DOC.md for details).
 
-# Start everything (builds images, creates dirs, launches containers)
-make
+### Running the project
 
-# Tear down (containers only, data preserved)
-make down
+    make            build all images and start the stack
+    make down       stop and remove containers (data is preserved)
+    make start      start previously stopped containers
+    make stop       stop containers without removing them
+    make restart    restart all containers
+    make logs       follow live logs from all services
+    make ps         show status of all containers
+    make clean      remove containers and images
+    make fclean     full reset — removes containers, images, and volumes
+    make re         fclean followed by a full rebuild
 
-# Full reset (removes images, volumes, and data)
-make fclean && make
-```
-
-### Access Points
-
-| Service       | URL / Port                        |
-|---------------|-----------------------------------|
-| WordPress     | `https://aayache.42.fr`           |
-| Adminer       | `http://localhost:8083`           |
-| Static Site   | `http://localhost:8081`           |
-| FileBrowser   | `http://localhost:8082`           |
-| FTP           | `ftp://localhost:21`              |
+For detailed usage instructions see USER_DOC.md.
+For developer setup and configuration details see DEV_DOC.md.
 
 ---
 
 ## Resources
 
-### Docker & Infrastructure
-- [Docker official documentation](https://docs.docker.com/)
-- [Docker Compose reference](https://docs.docker.com/compose/compose-file/)
-- [Alpine Linux packages](https://pkgs.alpinelinux.org/)
-- [NGINX documentation](https://nginx.org/en/docs/)
-- [MariaDB documentation](https://mariadb.com/kb/en/)
-- [Redis documentation](https://redis.io/docs/)
-- [WP-CLI documentation](https://wp-cli.org/)
-- [vsftpd manual](https://security.appspot.com/vsftpd.html)
-- [FileBrowser documentation](https://filebrowser.org/)
-- [Adminer](https://www.adminer.org/)
+Docker and infrastructure:
 
-### Concepts
-- [Containers vs VMs — Red Hat](https://www.redhat.com/en/topics/containers/containers-vs-vms)
-- [Docker secrets — official guide](https://docs.docker.com/engine/swarm/secrets/)
-- [Docker networking overview](https://docs.docker.com/network/)
-- [Docker storage — volumes vs bind mounts](https://docs.docker.com/storage/)
+- Docker official documentation — https://docs.docker.com/
+- Docker Compose file reference — https://docs.docker.com/compose/compose-file/
+- Docker secrets — https://docs.docker.com/engine/swarm/secrets/
+- Docker networking overview — https://docs.docker.com/network/
+- Docker storage: volumes and bind mounts — https://docs.docker.com/storage/
+- Alpine Linux package index — https://pkgs.alpinelinux.org/
 
-### AI Usage
-AI (Claude, Anthropic) was used during this project for the following tasks:
-- **Debugging entrypoint scripts**: helping diagnose shell script issues (`set -eu`, secret sourcing, wait loops).
-- **Docker Compose configuration**: reviewing service dependency ordering and volume definitions.
-- **WordPress + Redis integration**: identifying the correct WP-CLI commands to configure and enable the Redis object cache plugin.
-- **Documentation**: generating and structuring the README, USER_DOC, and DEV_DOC files based on the actual project source.
+Services:
 
-AI was **not** used to write the core Dockerfiles, entrypoint logic, or NGINX/MariaDB configuration from scratch — these were written and iterated on manually.
+- NGINX documentation — https://nginx.org/en/docs/
+- MariaDB knowledge base — https://mariadb.com/kb/en/
+- Redis documentation — https://redis.io/docs/
+- WP-CLI commands — https://developer.wordpress.org/cli/commands/
+- vsftpd manual — https://security.appspot.com/vsftpd.html
+- FileBrowser documentation — https://filebrowser.org/
+- Adminer — https://www.adminer.org/
+
+Concepts:
+
+- Containers vs Virtual Machines — https://www.redhat.com/en/topics/containers/containers-vs-vms
+- TLS/SSL overview — https://www.cloudflare.com/learning/ssl/what-is-ssl/
+- PHP-FPM — https://www.php.net/manual/en/install.fpm.php
+
+### How AI was used
+
+AI assistance was used in the following parts of this project:
+
+- Debugging shell entrypoint scripts, specifically issues with `set -eu`, secret file
+  sourcing, and service wait loops.
+- Reviewing Docker Compose service dependency ordering and volume configuration.
+- Understanding the correct WP-CLI sequence to install, configure, and activate the
+  Redis Cache plugin on first startup.
+
+AI was not used to write the core Dockerfiles, NGINX/MariaDB configuration files,
+or entrypoint logic from scratch — those were written and debugged manually.

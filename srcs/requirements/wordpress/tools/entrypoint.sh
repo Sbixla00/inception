@@ -45,7 +45,7 @@ if [ ! -f "${WP_PATH}/wp-settings.php" ]; then
   wp core download  --allow-root
 fi
 
-# ---------- Create wp-config.php (only if missing) ----------
+# ---------- Create wp-config.php only if missing) ----------
 if [ ! -f "${WP_PATH}/wp-config.php" ]; then
   wp config create \
      \
@@ -54,12 +54,11 @@ if [ ! -f "${WP_PATH}/wp-config.php" ]; then
     --dbpass="${MYSQL_PASSWORD}" \
     --dbhost="mariadb" \
     --allow-root
-  
+ fi
   # Add Redis configuration to wp-config.php
   wp config set WP_REDIS_HOST redis --allow-root --type=constant
-  wp config set WP_REDIS_PORT 6379 --raw --type=constant  --allow-root 
+  wp config set WP_REDIS_PORT 6379 --raw --type=constant  --allow-root
   wp config set WP_CACHE "true" --raw --allow-root --type=constant
-fi
 
 # ---------- Install WordPress + create users (only once) ----------
 if ! wp core is-installed  --allow-root; then
@@ -90,8 +89,6 @@ else
   wp plugin install redis-cache --activate --allow-root
 fi
 
-# only enable cache if redis responds
-if redis-cli -h redis -p 6379 ping 2>/dev/null | grep -q PONG; then
-  wp redis enable --allow-root
-fi
+wp redis enable --allow-root
+chown -R nobody:nobody /var/www/html
 exec php-fpm83 -F

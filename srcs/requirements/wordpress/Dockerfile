@@ -9,7 +9,9 @@ RUN apk add --no-cache \
     php83-mysqli \
     php83-phar php83-mbstring php83-json \
     php83-curl php83-openssl \
-    php83-redis \
+    php83-redis redis \
+    php83-tokenizer \
+    php83-ctype \
     curl tar mariadb-client
 
 # 2) Configure php-fpm to listen on the network (nginx is in another container)

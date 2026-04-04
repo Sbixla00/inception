@@ -1,210 +1,135 @@
 # DEV_DOC — Developer Documentation
 
-This document explains how to set up, build, run, and maintain the Inception project from a developer's perspective.
+This document explains how to set up, build, and manage the Inception project
+from a developer's perspective.
 
 ---
 
-## 1. Prerequisites
+## Prerequisites
 
-Make sure the following are installed on your machine before proceeding:
+Make sure the following tools are installed on the host machine before proceeding:
 
-| Tool               | Minimum version | Check command            |
-|--------------------|-----------------|--------------------------|
-| Docker Engine      | 24.x            | `docker --version`       |
-| Docker Compose V2  | 2.x             | `docker compose version` |
-| GNU Make           | any             | `make --version`         |
-| curl / openssl     | any             | available on most Linux  |
+    Tool                Minimum version   Check with
+    ----                ---------------   ----------
+    Docker Engine       24.x              docker --version
+    Docker Compose V2   2.x               docker compose version
+    GNU Make            any               make --version
 
-The project is designed to run on a **Linux host** (Debian/Ubuntu recommended). It has been tested inside a VirtualBox VM.
-
----
-
-## 2. Repository Layout
-
-```
-.
-├── Makefile                          # Top-level build orchestration
-├── secrets/
-│   ├── credentials.txt               # WordPress, FTP, FileBrowser creds
-│   ├── db_password.txt               # MariaDB wpuser password
-│   └── db_root_password.txt          # MariaDB root password
-└── srcs/
-    ├── .env                          # Non-secret runtime variables
-    ├── docker-compose.yml            # Full service definition
-    └── requirements/
-        ├── mariadb/                  # MariaDB image (Alpine)
-        │   ├── Dockerfile
-        │   ├── conf/my.cnf
-        │   └── tools/entrypoint.sh
-        ├── nginx/                    # NGINX image (Alpine, TLS)
-        │   ├── Dockerfile
-        │   ├── conf/default.conf
-        │   └── tools/entrypoint.sh
-        ├── wordpress/                # WordPress + PHP-FPM image (Alpine)
-        │   ├── Dockerfile
-        │   └── tools/entrypoint.sh
-        └── bonus/
-            ├── redis/                # Redis image (Alpine)
-            ├── ftp/                  # vsftpd image (Alpine)
-            ├── adminer/              # Adminer image (Alpine + PHP)
-            ├── static-website/       # Static NGINX site (Alpine)
-            └── filebrowser/          # FileBrowser image (Alpine)
-```
+The project is designed to run on a Linux host. It has been tested on Debian/Ubuntu
+inside a VirtualBox virtual machine.
 
 ---
 
-## 3. Configuration Files
+## Setting up the environment from scratch
 
-### `srcs/.env`
-Contains non-sensitive variables injected into containers via `env_file`:
+### 1. Clone the repository
 
-```dotenv
-DOMAIN_NAME=aayache.42.fr
-PASV_ADDRESS=10.0.2.15       # Host IP seen by FTP clients (PASV mode)
-```
+    git clone <repo-url> inception
+    cd inception
 
-Update `PASV_ADDRESS` to match the IP address of your host/VM interface if it differs.
+### 2. Add the domain to /etc/hosts
 
-### `secrets/`
-Contains three files sourced inside every entrypoint via:
-```sh
-set -a
-. /run/secrets/credentials
-. /run/secrets/db_password
-. /run/secrets/db_root_password
-set +a
-```
+    echo "127.0.0.1 aayache.42.fr" | sudo tee -a /etc/hosts
 
-These files are **never baked into images** — they are mounted at runtime by Docker secrets. See `srcs/docker-compose.yml` for the `secrets:` declarations.
+### 3. Fill in the configuration files
 
-### Host name resolution
-Add the domain to `/etc/hosts` on the host machine:
-```bash
-echo "127.0.0.1 aayache.42.fr" | sudo tee -a /etc/hosts
-```
+srcs/.env contains non-sensitive runtime variables:
 
-### Data directories
-The Makefile creates these before starting containers:
-```
-/home/aayache/data/wordpress/   ← WordPress files (bind mount)
-/home/aayache/data/mariadb/     ← MariaDB data (bind mount)
-```
-If your username differs from `aayache`, update `DATA_DIR` in the `Makefile` and the `device:` paths in `docker-compose.yml` volumes section.
+    DOMAIN_NAME=aayache.42.fr
+    PASV_ADDRESS=10.0.2.15
 
----
+Update PASV_ADDRESS to match the IP address of your host or VM interface
+(the address FTP clients will use to connect in passive mode).
 
-## 4. Building and Launching
+### 4. Fill in the secrets files
 
-```bash
-# Full build + start (the default target)
-make
+The following files must exist and contain valid values before the first run.
+They are mounted into containers at runtime as Docker secrets and are never
+baked into images.
 
-# Which is equivalent to:
-make dirs   # mkdir -p the data directories
-make up     # docker compose up -d --build
-```
+    secrets/credentials.txt       WordPress admin/user accounts, FTP and FileBrowser
+    secrets/db_password.txt       MYSQL_PASSWORD=<value>
+    secrets/db_root_password.txt  MYSQL_ROOT_PASSWORD=<value>
 
-Docker Compose builds each image from its own `Dockerfile` and wires everything together. On first run, WordPress's entrypoint will:
-1. Wait for MariaDB to accept connections.
-2. Wait for Redis to be reachable.
-3. Download WordPress core via WP-CLI.
-4. Generate `wp-config.php` with database + Redis constants.
-5. Run `wp core install` to initialize the database.
-6. Create the non-admin author account.
-7. Install and activate the Redis Cache plugin.
-8. Hand off to `php-fpm83`.
+The format used in each file is documented inside the file itself.
+Never commit the secrets/ directory to a public repository.
 
-This initialization happens **only once** because subsequent runs detect `wp-config.php` and an installed database.
+### 5. Adjust the host data path (if needed)
+
+The Makefile creates these host directories automatically on first run:
+
+    /home/aayache/data/mariadb/
+    /home/aayache/data/wordpress/
+
+If your username differs from aayache, update the DATA_DIR variable in the
+Makefile and the device: values under volumes in srcs/docker-compose.yml.
 
 ---
 
-## 5. Useful Container Management Commands
+## Building and launching the project
 
-```bash
-# Rebuild and restart a single service (e.g. after editing its Dockerfile)
-docker compose -f srcs/docker-compose.yml up -d --build wordpress
+The Makefile wraps all Docker Compose operations:
 
-# Execute a shell inside a running container
-docker exec -it wordpress sh
-docker exec -it mariadb sh
-docker exec -it nginx sh
+    make              create host directories, build all images, start containers
+    make down         stop and remove containers  (data is preserved)
+    make start        start previously stopped containers
+    make stop         stop containers without removing them
+    make restart      restart all containers
+    make logs         follow live logs from all services
+    make ps           list all containers and their status
+    make clean        remove containers and images
+    make fclean       remove containers, images, and Docker volumes  (destructive)
+    make re           equivalent to: make fclean then make
 
-# Follow logs for one service
-docker compose -f srcs/docker-compose.yml logs -f nginx
+To rebuild a single service after editing its Dockerfile or entrypoint:
 
-# Inspect all running containers
-make ps
-
-# Stop everything (keeps volumes and images)
-make down
-
-# Remove all containers and images (keeps volumes/data)
-make clean
-
-# Remove everything including volumes (DESTRUCTIVE — data loss)
-make fclean
-
-# Full rebuild from scratch
-make re
-```
+    docker compose -f srcs/docker-compose.yml up -d --build <service>
 
 ---
 
-## 6. Data Persistence
+## Managing containers and volumes
 
-### Where data lives
+Open a shell inside a running container:
 
-| Data                | Host path                          | Volume name      |
-|---------------------|------------------------------------|------------------|
-| MariaDB database    | `/home/aayache/data/mariadb/`      | `mariadb_data`   |
-| WordPress files     | `/home/aayache/data/wordpress/`    | `wordpress_data` |
-| FileBrowser DB      | Docker-managed named volume        | `filebrowser_data` |
+    docker exec -it <container-name> sh
 
-Both `mariadb_data` and `wordpress_data` use the `local` driver with `type: none` and `o: bind` — meaning Docker treats them as named volumes but they are actually bind-mounted to specific host paths. This guarantees data survives `docker compose down` and even `docker system prune`.
+Examples:
+    docker exec -it wordpress sh
+    docker exec -it mariadb sh
+    docker exec -it nginx sh
 
-`make fclean` calls `docker volume prune -f`, which removes **only** Docker-managed named volumes (including `filebrowser_data`). The bind-mount directories on the host (`/home/aayache/data/`) are **not** automatically deleted — remove them manually if needed:
+Follow logs for one service:
 
-```bash
-sudo rm -rf /home/aayache/data/
-```
+    docker compose -f srcs/docker-compose.yml logs -f <service>
 
-### Resetting WordPress or MariaDB only
-```bash
-# Stop containers
-make down
+Inspect a volume:
 
-# Clear WordPress files
-sudo rm -rf /home/aayache/data/wordpress/*
+    docker volume inspect inception_wordpress_data
 
-# Clear database
-sudo rm -rf /home/aayache/data/mariadb/*
+List all volumes:
 
-# Rebuild
-make up
-```
+    docker volume ls
 
 ---
 
-## 7. TLS Certificate
+## Where project data is stored and how it persists
 
-The NGINX entrypoint generates a **self-signed certificate** at first start:
-```
-/etc/nginx/ssl/nginx.crt
-/etc/nginx/ssl/nginx.key
-```
-The certificate is generated inside the container (not persisted to a volume), so it is regenerated on every container start. The subject CN is set to `aayache.42.fr` with a matching SAN extension.
+    Data             Host path                         Volume name
+    ----             ---------                         -----------
+    MariaDB          /home/aayache/data/mariadb/       mariadb_data
+    WordPress files  /home/aayache/data/wordpress/     wordpress_data
+    FileBrowser DB   managed by Docker (no host path)  filebrowser_data
 
-To inspect it:
-```bash
-docker exec -it nginx openssl x509 -in /etc/nginx/ssl/nginx.crt -noout -text
-```
+Both mariadb_data and wordpress_data are declared as bind-mount-backed named
+volumes (driver: local, type: none, o: bind). This means the data lives at the
+specified host path and is not affected by docker compose down or docker system prune.
 
----
+make fclean runs docker volume prune -f, which removes Docker-managed named
+volumes (including filebrowser_data) but does NOT delete the bind-mount directories
+on the host.
 
-## 8. Adding or Modifying a Service
+To fully wipe all data and start fresh:
 
-1. Create a new directory under `srcs/requirements/bonus/<service>/`.
-2. Write a `Dockerfile` based on `alpine:3.22` (no pre-built app images).
-3. Add an `entrypoint.sh` that sources secrets and starts the process.
-4. Add the service block to `srcs/docker-compose.yml` (network, volumes, ports, secrets as needed).
-5. Run `make re` to rebuild from scratch, or `docker compose -f srcs/docker-compose.yml up -d --build <service>` for an incremental rebuild.
+    make fclean
+    sudo rm -rf /home/aayache/data/
+    make
