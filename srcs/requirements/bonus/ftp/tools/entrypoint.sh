@@ -29,8 +29,8 @@ else
   exit 1
 fi
 
-chown -R "$FTP_USER:$FTP_USER" "$FTP_ROOT"
-chmod -R 755 "$FTP_ROOT"
+chown "$FTP_USER:$FTP_USER" "$FTP_ROOT"
+chmod 755 "$FTP_ROOT"
 
 touch /var/log/vsftpd.log
 
