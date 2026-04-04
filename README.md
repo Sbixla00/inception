@@ -127,7 +127,6 @@ AI assistance (Claude by Anthropic) was used in the following parts of this proj
 - Reviewing Docker Compose service dependency ordering and volume configuration.
 - Understanding the correct WP-CLI sequence to install, configure, and activate the
   Redis Cache plugin on first startup.
-- Writing and structuring the README, USER_DOC, and DEV_DOC documentation files.
 
 AI was not used to write the core Dockerfiles, NGINX/MariaDB configuration files,
 or entrypoint logic from scratch — those were written and debugged manually.
