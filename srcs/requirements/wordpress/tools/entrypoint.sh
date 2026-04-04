@@ -71,6 +71,8 @@ if ! wp core is-installed  --allow-root; then
     --admin_email="${WP_ADMIN_EMAIL}" \
     --skip-email \
     --allow-root
+    wp rewrite structure '/%postname%/' --hard --allow-root
+    wp rewrite flush --hard --allow-root
 fi
 
   # Second user (non-admin)
