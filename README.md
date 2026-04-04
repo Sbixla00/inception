@@ -120,13 +120,14 @@ Concepts:
 
 ### How AI was used
 
-AI assistance was used in the following parts of this project:
+AI assistance (Claude by Anthropic) was used in the following parts of this project:
 
 - Debugging shell entrypoint scripts, specifically issues with `set -eu`, secret file
   sourcing, and service wait loops.
 - Reviewing Docker Compose service dependency ordering and volume configuration.
 - Understanding the correct WP-CLI sequence to install, configure, and activate the
   Redis Cache plugin on first startup.
+- Writing and structuring the README, USER_DOC, and DEV_DOC documentation files.
 
 AI was not used to write the core Dockerfiles, NGINX/MariaDB configuration files,
 or entrypoint logic from scratch — those were written and debugged manually.
